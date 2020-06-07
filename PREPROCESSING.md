@@ -1,13 +1,13 @@
 - Download your Twitter account archive, unzip, and make a copy of the file 'tweet.js' as 'tweet.json'
 - On the first line, remove the variable assignment, i.e. change the line:
 
-  ```
+```
 window.YTD.tweet.part0 = [ {
 ```
 
   to the line
 
-  ```
+```
 [ {
 ```
 
