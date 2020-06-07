@@ -4,10 +4,11 @@ Analysis of WOTD data from Tweets marked #WordOfTheDay from my Twitter account
 
 # Preprocessing
 
-For detailed preprocessing instructions see [PREPROCESSING.md](PREPROCESSING.md)
+For detailed preprocessing instructions see [PREPROCESSING.md](PREPROCESSING.md), which
+in summary consists of the following to produce `wotd_tweet.json` from `tweet.js` (a file provided by Twitter):
 
 ```sh
-function trivialjs2json () { tail -c +$(echo 3 + $(grep -b -o "=" <<<"$(head -1 $@)" | cut -d: -f1) | bc) $@; }
+function js2json () { tail -c +$(echo 3 + $(grep -b -o "=" <<<"$(head -1 $@)" | cut -d: -f1) | bc) $@; }
 
-trivialjs2json tweet.js | jq '[.[] | select(.tweet .full_text | index("#WordOfTheDay") >= 0)]' > wotd_tweet.json
+jq '[.[] | select(.tweet .entities .hashtags[] .text | test("wordoftheday"; "i"))]' <<<$(trivialjs2json tweet.js) > wotd_tweet.json
 ```
