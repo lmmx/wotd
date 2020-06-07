@@ -10,5 +10,5 @@ in summary consists of the following to produce `wotd_tweet.json` from `tweet.js
 ```sh
 function js2json () { tail -c +$(echo 3 + $(grep -b -o "=" <<<"$(head -1 $@)" | cut -d: -f1) | bc) $@; }
 
-jq '[.[] | select(.tweet .entities .hashtags[] .text | test("wordoftheday"; "i"))]' <<<$(trivialjs2json tweet.js) > wotd_tweet.json
+jq '[.[] | select(.tweet .entities .hashtags[] .text | test("wordoftheday"; "i"))]' <<<$(js2json tweet.js) > wotd_tweet.json
 ```
