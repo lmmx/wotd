@@ -1,0 +1,106 @@
+- [ ] `.[] .tweet .created_at`
+- [x] `.[] .tweet .display_text_range`
+- [ ] `.[] .tweet .entities`
+- [ ] `.[] .tweet .entities .hashtags`
+- [ ] `.[] .tweet .entities .hashtags[] .indices`
+- [ ] `.[] .tweet .entities .hashtags[] .text`
+- [ ] `.[] .tweet .entities .media`
+- [ ] `.[] .tweet .entities .media[] .display_url`
+- [ ] `.[] .tweet .entities .media[] .expanded_url`
+- [ ] `.[] .tweet .entities .media[] .id`
+- [ ] `.[] .tweet .entities .media[] .id_str`
+- [ ] `.[] .tweet .entities .media[] .indices`
+- [ ] `.[] .tweet .entities .media[] .media_url`
+- [ ] `.[] .tweet .entities .media[] .media_url_https`
+- [ ] `.[] .tweet .entities .media[] .sizes`
+- [ ] `.[] .tweet .entities .media[] .sizes .large`
+- [ ] `.[] .tweet .entities .media[] .sizes .large .h`
+- [ ] `.[] .tweet .entities .media[] .sizes .large .resize`
+- [ ] `.[] .tweet .entities .media[] .sizes .large .w`
+- [ ] `.[] .tweet .entities .media[] .sizes .medium`
+- [ ] `.[] .tweet .entities .media[] .sizes .medium .h`
+- [ ] `.[] .tweet .entities .media[] .sizes .medium .resize`
+- [ ] `.[] .tweet .entities .media[] .sizes .medium .w`
+- [ ] `.[] .tweet .entities .media[] .sizes .small`
+- [ ] `.[] .tweet .entities .media[] .sizes .small .h`
+- [ ] `.[] .tweet .entities .media[] .sizes .small .resize`
+- [ ] `.[] .tweet .entities .media[] .sizes .small .w`
+- [ ] `.[] .tweet .entities .media[] .sizes .thumb`
+- [ ] `.[] .tweet .entities .media[] .sizes .thumb .h`
+- [ ] `.[] .tweet .entities .media[] .sizes .thumb .resize`
+- [ ] `.[] .tweet .entities .media[] .sizes .thumb .w`
+- [ ] `.[] .tweet .entities .media[] .source_status_id`
+- [ ] `.[] .tweet .entities .media[] .source_status_id_str`
+- [ ] `.[] .tweet .entities .media[] .source_user_id`
+- [ ] `.[] .tweet .entities .media[] .source_user_id_str`
+- [ ] `.[] .tweet .entities .media[] .type`
+- [ ] `.[] .tweet .entities .media[] .url`
+- [ ] `.[] .tweet .entities .symbols`
+- [ ] `.[] .tweet .entities .urls`
+- [ ] `.[] .tweet .entities .urls[] .display_url`
+- [ ] `.[] .tweet .entities .urls[] .expanded_url`
+- [ ] `.[] .tweet .entities .urls[] .indices`
+- [ ] `.[] .tweet .entities .urls[] .url`
+- [ ] `.[] .tweet .entities .user_mentions`
+- [ ] `.[] .tweet .entities .user_mentions[] .id`
+- [ ] `.[] .tweet .entities .user_mentions[] .id_str`
+- [ ] `.[] .tweet .entities .user_mentions[] .indices`
+- [ ] `.[] .tweet .entities .user_mentions[] .name`
+- [ ] `.[] .tweet .entities .user_mentions[] .screen_name`
+- [ ] `.[] .tweet .extended_entities`
+- [ ] `.[] .tweet .extended_entities .media`
+- [ ] `.[] .tweet .extended_entities .media[] .additional_media_info`
+- [ ] `.[] .tweet .extended_entities .media[] .additional_media_info .monetizable`
+- [ ] `.[] .tweet .extended_entities .media[] .display_url`
+- [ ] `.[] .tweet .extended_entities .media[] .expanded_url`
+- [ ] `.[] .tweet .extended_entities .media[] .id`
+- [ ] `.[] .tweet .extended_entities .media[] .id_str`
+- [ ] `.[] .tweet .extended_entities .media[] .indices`
+- [ ] `.[] .tweet .extended_entities .media[] .media_url`
+- [ ] `.[] .tweet .extended_entities .media[] .media_url_https`
+- [ ] `.[] .tweet .extended_entities .media[] .sizes`
+- [ ] `.[] .tweet .extended_entities .media[] .sizes .large`
+- [ ] `.[] .tweet .extended_entities .media[] .sizes .large .h`
+- [ ] `.[] .tweet .extended_entities .media[] .sizes .large .resize`
+- [ ] `.[] .tweet .extended_entities .media[] .sizes .large .w`
+- [ ] `.[] .tweet .extended_entities .media[] .sizes .medium`
+- [ ] `.[] .tweet .extended_entities .media[] .sizes .medium .h`
+- [ ] `.[] .tweet .extended_entities .media[] .sizes .medium .resize`
+- [ ] `.[] .tweet .extended_entities .media[] .sizes .medium .w`
+- [ ] `.[] .tweet .extended_entities .media[] .sizes .small`
+- [ ] `.[] .tweet .extended_entities .media[] .sizes .small .h`
+- [ ] `.[] .tweet .extended_entities .media[] .sizes .small .resize`
+- [ ] `.[] .tweet .extended_entities .media[] .sizes .small .w`
+- [ ] `.[] .tweet .extended_entities .media[] .sizes .thumb`
+- [ ] `.[] .tweet .extended_entities .media[] .sizes .thumb .h`
+- [ ] `.[] .tweet .extended_entities .media[] .sizes .thumb .resize`
+- [ ] `.[] .tweet .extended_entities .media[] .sizes .thumb .w`
+- [ ] `.[] .tweet .extended_entities .media[] .source_status_id`
+- [ ] `.[] .tweet .extended_entities .media[] .source_status_id_str`
+- [ ] `.[] .tweet .extended_entities .media[] .source_user_id`
+- [ ] `.[] .tweet .extended_entities .media[] .source_user_id_str`
+- [ ] `.[] .tweet .extended_entities .media[] .type`
+- [ ] `.[] .tweet .extended_entities .media[] .url`
+- [ ] `.[] .tweet .extended_entities .media[] .video_info`
+- [ ] `.[] .tweet .extended_entities .media[] .video_info .aspect_ratio`
+- [ ] `.[] .tweet .extended_entities .media[] .video_info .duration_millis`
+- [ ] `.[] .tweet .extended_entities .media[] .video_info .variants`
+- [ ] `.[] .tweet .extended_entities .media[] .video_info .variants[] .bitrate`
+- [ ] `.[] .tweet .extended_entities .media[] .video_info .variants[] .content_type`
+- [ ] `.[] .tweet .extended_entities .media[] .video_info .variants[] .url`
+- [ ] `.[] .tweet .favorite_count`
+- [x] `.[] .tweet .favorited`
+- [ ] `.[] .tweet .full_text`
+- [x] `.[] .tweet .id`
+- [ ] `.[] .tweet .id_str`
+- [ ] `.[] .tweet .in_reply_to_screen_name`
+- [ ] `.[] .tweet .in_reply_to_status_id`
+- [ ] `.[] .tweet .in_reply_to_status_id_str`
+- [ ] `.[] .tweet .in_reply_to_user_id`
+- [ ] `.[] .tweet .in_reply_to_user_id_str`
+- [ ] `.[] .tweet .lang`
+- [x] `.[] .tweet .possibly_sensitive`
+- [ ] `.[] .tweet .retweet_count`
+- [x] `.[] .tweet .retweeted`
+- [x] `.[] .tweet .source`
+- [x] `.[] .tweet .truncated`
