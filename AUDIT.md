@@ -84,7 +84,9 @@ black path_trie.py
 
 Just as a nice touch, we can 'pretty print' just the structure from this nicely formatted
 Python dictionary layout thanks to black. Stripping out everything but key names and
-whitespace shows the structure of the hierarchy:
+whitespace shows the structure of the hierarchy
+
+- Note: this actually deletes some keys, we need a better solution
 
 ```sh
 cat path_trie.py | sed 's/: {None: None}//g'| sed '/\},*/d' | cut -d " " -f 5- | \
@@ -207,6 +209,31 @@ Consider how in our path list above, there are these two lines:
 
 i.e. the "sizes" key is both a leaf and a parent. The "large" leaf key is not a parent.
 
+- In the 'minimalist' representation, note that there is a `—` underneath sizes to show this
+
+```
+                sizes 
+                    —,
+                    large 
+```
+
+from
+
+```
+                    ".sizes": {
+                        None: None,
+                        ".large": {
+```
+
 Rather than just print it out arbitrarily indented, I want to print it out so that
 the node names align with their parent nodes (and this should make clear when parent
 nodes are and are not also leaves).
+
+There are two ways to get return from an async function:
+- print it out to STDOUT (as in [`trie_walk.py`](trie_walk.py))
+  - I directed the output to [`trie_walked.txt`](trie_walked.txt) for viewing
+- yield from the calls that would otherwise return after printing (as in [`trie_walk_yielding.py`](trie_walk_yielding.py))
+
+What I want next is to align using whitespace to indicate where lines differ from the precedent line.
+
+To begin with I split the path at each line into a `preceder` subpath, which can then be omitted from the path as a 'common prefix'.
