@@ -364,3 +364,42 @@ that any 'stepping down' must be a single 'step' at a time (since a JSON path tr
   `[]` is masked as whitespace.
 - Also note that the first line is treated differently, so as long as the paths are sorted
   following the initial line, the algorithm should display any set of JSON paths from jq correctly.
+
+---
+
+This was all in aid of getting a better look at the checklist of UKPs, and specifically
+I want to pipe the `grep`'d subsets:
+
+- Paths not `[x]`-marked which have multiple iterators
+- Paths not `[x]`-marked which only have the top-level iterator
+
+...and the paths marked by `[x]` were easily selected by:
+
+```sh
+grep '\-\s\[x\]' ukp_manifest.md | cut -d\` -f2
+```
+
+So far, the `summarise_paths.py` script takes input over STDIN (shell pipes) and
+the script `trie_walk.py` takes input from a hardcoded file. I want to now be able to 
+pipe anything into `trie_walk.py` and get its nicely presented masked trie output.
+
+- To do this, I will add a single flag to `trie_walk.py`, the standard flag for reading
+  input over a pipe which is `-`. This way I can pipe a subset of lines in the UKP checklist
+  (from `grep`) and process them without going through `summarise_paths.py`.
+
+- I added a simple `__name__ == "__main__"` check to `summarise_paths.py` to control the function
+  which reads these lines from STDIN and prints their processed trie to STDOUT.
+  - This function is called `pipe_trie`
+
+- I added a simple `if "-" in sys.argv` check to `trie_walk.py` to override the imported
+  `trie` variable from `path_trie` and instead generate a new trie via `summarise_paths`.
+  - The list of lines are passed to the `pipe_trie` function as its `piped_input` parameter,
+    replacing the list of lines read from the STDIN pipe when `summarise_paths` is invoked as
+    `__main__`.
+  - A bit of a hack, but pleasingly allows the `summarise_paths` module to be used in both modes:
+    instead of a simple `print` statement for the constructed trie, `summarise_paths.py`⠶`pipe_trie`
+    ends with the line `return outfunc(trie)`.
+    - By default `outfunc=print`, but when calling it from another module (in this case, I'm
+      calling it from `trie_walk.py`) I pass in the trivial lambda function `lambda x: x`, so
+      the `outfunc` wrapper has no effect, and the result of `pipe_trie` becomes `return trie`,
+      passing it back to the module the call came from (which in this case is `trie_walk.py`).

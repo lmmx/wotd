@@ -1,5 +1,8 @@
 from path_trie import trie
+from summarise_paths import pipe_trie
 from trie_util import mask_preceding
+import sys
+import fileinput
 
 
 def trie_walk(
@@ -19,6 +22,7 @@ def trie_walk(
     Default `showfunc` will simply print each path to STDOUT, however
     it can be replaced by any function definition or lambda.
     """
+    final_depth_reached = False  # to signal if you reached the 'bottom' of a subtree
     if level_changes is None:
         level_changes = []  # initialise running tally of trie walkback step sizes
         leaf_sizes = []
@@ -40,7 +44,16 @@ def trie_walk(
                 prev_level_change = None  # only for an initial
             leaf_size = len(seen[len(preceder) :])
             leaf_sizes.append(leaf_size)
-            showfunc(preceder, seen, level_changes, prev_level_change, leaf_sizes, null_children)
+            showfunc(
+                preceder,
+                seen,
+                level_changes,
+                prev_level_change,
+                leaf_sizes,
+                null_children,
+            )
+            if sk == level_keys[-1][-1]:
+                final_depth_reached = True
             gone = seen.pop()  # leaf will not be remembered (after being shown)
             if i == len(subtrees) - 1:
                 popped = seen.pop()
@@ -61,6 +74,9 @@ def trie_walk(
                             level_change -= 1
                     elif popped == level_keys[len(preceder)][-1]:
                         while popped == level_keys[len(preceder)][-1]:
+                            if final_depth_reached and len(seen) == 0:
+                                # can no longer recurse backward, must exit
+                                return
                             popped = seen.pop()
                             preceder.pop()
                             level_keys.pop()
@@ -76,25 +92,46 @@ def trie_walk(
                 prev_level_change = level_changes[-1]
             else:
                 prev_level_change = None  # only for an initial
-            if preceder[-1] == ".large": pass#breakpoint()
             leaf_size = len(seen[len(preceder) :])
             leaf_sizes.append(leaf_size)
-            #print(preceder)
-            showfunc(preceder, seen, level_changes, prev_level_change, leaf_sizes, null_children)
+            # print(preceder)
+            showfunc(
+                preceder,
+                seen,
+                level_changes,
+                prev_level_change,
+                leaf_sizes,
+                null_children,
+            )
             level_changes.append(level_change)
             continue
         subtree_keys = list(subtree.keys())
         preceder.append(sk)
         yield from trie_walk(
-            subtree, showfunc, seen, preceder, level + 1, level_keys, level_changes, leaf_sizes, null_children
+            subtree,
+            showfunc,
+            seen,
+            preceder,
+            level + 1,
+            level_keys,
+            level_changes,
+            leaf_sizes,
+            null_children,
         )
 
 
-def mask_preceding_printing(preceder, seen, level_changelog, level_change, leaf_sizes, null_children):
-    str_out = mask_preceding(preceder, seen, level_changelog, level_change, leaf_sizes, null_children)
+def mask_preceding_printing(
+    preceder, seen, level_changelog, level_change, leaf_sizes, null_children
+):
+    str_out = mask_preceding(
+        preceder, seen, level_changelog, level_change, leaf_sizes, null_children
+    )
     print(str_out)
     return
 
 
-# r = list(trie_walk(trie))
+if "-" in sys.argv:
+    piped_input = list(fileinput.input())
+    trie = pipe_trie(piped_input, outfunc=lambda x: x)
+
 r = list(trie_walk(trie, showfunc=mask_preceding_printing))

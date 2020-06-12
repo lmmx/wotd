@@ -51,11 +51,14 @@ def mask_preceding(preceder, path, lvls, level, leaf_sizes, null_children, seps=
     return line
 
 
-def mask_preceding_arrows(preceder, path):
-    leaf = path[len(preceder) :]
-
-    prec_str = " ⇒ ".join(preceder)
-    leaf_str = " ⇢ ".join(seen[leaf])
-
-    line = " ⠶ ".join([prec_str, leaf_str])
-    return line
+#def mask_preceding_arrows(preceder, path):
+#    """
+#    Deprecated very simple version
+#    """
+#    leaf = path[len(preceder) :]
+#
+#    prec_str = " ⇒ ".join(preceder)
+#    leaf_str = " ⇢ ".join(seen[leaf])
+#
+#    line = " ⠶ ".join([prec_str, leaf_str])
+#    return line
