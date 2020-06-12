@@ -1,3 +1,6 @@
+# Auditing the unique key paths in a JSON file with a trie
+
+## 1. Intro
 
 To retrieve the paths marked with an `x` inside the checkbox indicating that the path is to be filtered out:
 
@@ -15,13 +18,16 @@ grep '\-\s\[x\]' ukp_manifest.md | cut -d\` -f2
 .[] .tweet .truncated
 ```
 
-Each of these lines is a path that can be provided to `jq`'s `del` command, providing that
+Each of these lines is a path that in turn can be passed to `jq`'s `del` command, providing that:
 
 - Each `[]` iterator part of the path is 'expanded' before the `del` call,
 - after opening an array,
 - and closing this array after the `del` call (so as to return the iterated list contents into a list)
 
+
 ---
+
+## 2. A quick summary view of the UKP checklist (`sed`, `cut`, `tr`)
 
 Next we must examine the other types of path:
 
@@ -89,7 +95,7 @@ whitespace shows the structure of the hierarchy
 ```sh
 cat path_trie.py | sed 's/: {None: None}//g'| sed '/\},*/d' | cut -d " " -f 5- | \
   sed '/^\s*$/d' | tr -d ":" | tr -d '"' | tr -d "{" | tr -d "." | \
-  sed 's/None None/—/g' | s
+  sed 's/None None/—/g'
 ```
 
 ```STDOUT
@@ -207,6 +213,9 @@ Consider how in our path list above, there are these two lines:
 
 i.e. the "sizes" key is both a leaf and a parent. The "large" leaf key is not a parent.
 
+> (Actually the large leaf key is a parent, but for now imagine this is our entire tree,
+> in which case it wouldn't be a parent as it's the last path in the list)
+
 - We will say that the "sizes" key has a "null child" (as well as the "large" key as a 2nd child).
 - In the 'minimalist' representation, note that there is a `—` underneath sizes to show this
 
@@ -228,18 +237,31 @@ Rather than just print it out arbitrarily indented, I want to print it out so th
 the node names align with their parent nodes (and this should make clear when parent
 nodes are and are not also leaves).
 
-There are two ways to get return from an async function:
+To do this, I will put down command line tools and write a proper parser in Python.
+
+## 3. Proper Python parsing: taking a recursive walk on a trie
+
+There are two ways to get return from a recursive function:
 - print it out to STDOUT (as in [`trie_walk.py`](trie_walk.py))
 - yield from the calls that would otherwise return after printing (as in [`trie_walk_yielding.py`](trie_walk_yielding.py))
 
+> As a technical note, I think you'd call this recursive function "async but blocking", meaning it
+> could technically run in parallel and have results from shallower parts of the tree come back before
+> the deeper ones, but I want it to return in the same order as the lines so it's "blocking".  
+> (Don't quote me on that)
+
 What I want next is to align using whitespace to indicate where lines differ from the precedent line.
 
-To begin with I split the path at each line into a `preceder` subpath, which can then be omitted from the path as a 'common prefix'.
-This is much simplified by the trie data structure, as the way to do so is to simply replace all characters in the preceder subpath
-with whitespace unless the appendage to that subpath is empty (i.e. the subpath has one of the aforementioned 'null child' leaves).
+To begin with I split the path at each line into a `preceder` subpath, which can then be omitted from the
+path as a 'common prefix'.  This is much simplified by the trie data structure, as the way to do so is to
+simply replace all characters in the preceder subpath with whitespace unless the appendage to that subpath
+is empty (i.e. the subpath has one of the aforementioned 'null child' leaves).
 
-- I have written the STDOUT printing and async yielding versions of the program to both read from the same preprocessor function, `mask_preceding` in [`trie_util.py`](trie_util.py).
-  - I piped the output of `trie_walk.py` using a simpler printing function into `trie_walked_arrows.txt` (the function is available in `trie_util.py` as `mask_preceding_arrows`)
+- I have written the STDOUT printing and async yielding versions of the program to both read from the same
+  preprocessor function, `mask_preceding` in [`trie_util.py`](trie_util.py).
+
+  - I piped the output of `trie_walk.py` using a simpler printing function into `trie_walked_arrows.txt`
+    (the function is commented out in `trie_util.py` as `mask_preceding_arrows`)
 
 ```sh
 python trie_walk.py | tee trie_walked.txt
@@ -328,8 +350,10 @@ python trie_walk.py | tee trie_walked.txt
                                                                .url
 ```
 
-An interesting side effect to note here is that due to the assumption that the input is
-presorted (i.e. it permits/respects any lexicographic order) is that there's no demand for
+## 4. Subtle but important: iterator masking
+
+**N.B.** — an interesting side effect here is that due to the assumption that the input is
+presorted (i.e. it permits/respects any lexicographic order), there's no demand for
 parent keys to be called the same thing 'as a parent' vs. 'as a leaf' (so perhaps it's not
 strictly a trie? I'm not sure, though the data structure is).
 
@@ -379,9 +403,16 @@ I want to pipe the `grep`'d subsets:
 grep '\-\s\[x\]' ukp_manifest.md | cut -d\` -f2
 ```
 
-So far, the `summarise_paths.py` script takes input over STDIN (shell pipes) and
-the script `trie_walk.py` takes input from a hardcoded file. I want to now be able to 
-pipe anything into `trie_walk.py` and get its nicely presented masked trie output.
+## 5. Through a proper Python parser, pipeably: trie walking from any STDIN
+
+So far, the `summarise_paths.py` script takes input over STDIN (shell pipes) but then
+that was piped into a hardcoded file (a variable named `trie` stored in `path_trie.py`).
+`trie_walk.py` then read that file and printed out a nice readable masked version of the trie.
+
+Now I've got my trie walking algorithm working consistently, and all edge cases worked out,
+I want to be able to pipe any checklist into `trie_walk.py` and get its nicely presented masked
+trie output, without going through the intermediate step of saving to a new file or overwriting
+`path_trie.py`.
 
 - To do this, I will add a single flag to `trie_walk.py`, the standard flag for reading
   input over a pipe which is `-`. This way I can pipe a subset of lines in the UKP checklist
@@ -414,7 +445,7 @@ grep -v "\- \[x\]" ukp_manifest.md | grep "\[\].*\[\]" | cut -d\` -f2 | python t
 ```
 
 We can even verify it's identical to the non-piped version
-- `$(!!) gets the output of rerunning the last command`
+- `$(!!)` gets the output of rerunning the last command
 
 ```sh
 diff <(python trie_walk.py) <(echo "$(!!)")
@@ -423,6 +454,8 @@ diff <(python trie_walk.py) <(echo "$(!!)")
 The nice thing about this is that we can view a subsection but still get the easy to read
 masking of repeated subpaths on each line (whereas for instance just taking the `tail` of
 the output of the hardcoded file would omit the first line making the full path unknown).
+
+- This happened when I took the tail to show `variants`, above. I will come back to this below.
 
 ```sh
 grep -v "\- \[x\]" ukp_manifest.md | grep "\[\].*\[\]" | cut -d\` -f2 | tail -30 | python trie_walk.py -
@@ -477,6 +510,110 @@ grep -v "\- \[x\]" ukp_manifest.md | grep "\[\].*\[\]" | cut -d\` -f2 | tail -7 
                                                                .url
 ```
 
-etc.
+...and just the final 2 levels, then just the final 1 level, to show the omission of the iterator on the
+variants key.
+
+```sh
+grep -v "\- \[x\]" ukp_manifest.md | grep "\[\].*\[\]" | cut -d\` -f2 | tail -4 | python trie_walk.py -
+```
+
+```STDOUT
+.[] .tweet .extended_entities .media[] .video_info .variants
+                                                               .bitrate
+                                                               .content_type
+                                                               .url
+```
+
+```sh
+grep -v "\- \[x\]" ukp_manifest.md | grep "\[\].*\[\]" | cut -d\` -f2 | tail -3 | python trie_walk.py -
+```
+
+```STDOUT
+.[] .tweet .extended_entities .media[] .video_info .variants[] .bitrate
+                                                               .content_type
+                                                               .url
+```
+
+(etc.)
 
 ---
+
+## 6. Building a jq del call from a checklist
+
+So to get back to the point here, the prototypical example of the `jq del` call we want to build from these
+tries is `dejunk.sh` (which was described in `DEJUNK.md`)
+
+```sh
+# Removes:
+# - .tweet.retweeted
+# - .tweet.source
+# - .tweet.display_text_range
+# - .tweet.id
+# - .tweet.truncated
+# - .tweet.favorited
+# - .tweet.possibly_sensitive
+
+jq '[.[] | del(.tweet ["retweeted", "source", "display_text_range", "id", "truncated", "favorited", "possibly_sensitive"] )]' wotd_tweet.json
+```
+
+If we produce the masked trie from the list of paths this `del` call targets, we get the following:
+
+```sh
+grep '\-\s\[x\]' ukp_manifest.md | cut -d\` -f2 | python trie_walk.py -
+```
+
+```STDOUT
+.[] .tweet .display_text_range
+           .favorited
+           .id
+           .possibly_sensitive
+           .retweeted
+           .source
+           .truncated
+```
+
+To recap what was said at the beginning of this file, the requirements for this `del` call are:
+
+> - Each `[]` iterator part of the path is 'expanded' before the `del` call,
+> - after opening an array,
+> - and closing this array after the `del` call (so as to return the iterated list contents into a list)
+
+Comparing these requirements to the masked trie representation from `trie_walk.py` for the simple `jq del`
+call in `dejunk.sh`:
+
+- At the same point (specifically, exactly before) each iterator is introduced, open an array (with a square bracket)
+
+  - Here the only iterator introduced is `.[]`, and there's a `[` before it, which is closed at the end of the command
+
+- Below the iterator, add any "preceder" parts of the subpath inside a `del` call, followed by an array of the leaves
+  (this array requires another pair of square brackets, which close immediately before the `del` call's round bracket closes).
+
+  - Here the only "preceder" part of the subpath below the only iterator (`.[]`) is `.tweet`,
+    and `.tweet` is inside the opening of the `del` call, followed by an array of the leaves.
+
+  - Note that `jq` has sorted the leaves alphabetically when enumerating the paths, so the masked trie leaf order
+    is different to the one in the `dejunk.sh` file (which is in the order of appearance of the keys in the JSON).
+    The alphabetical order is easier to read.
+
+- At the "leaf" (i.e. the node following the masked "preceder" part/s of the subpath), presumably repeat the above
+  steps upon reaching any 'sub-keys' (i.e. open another array to target the subkey).
+
+  - Note that for a `del` call, keys and subkeys will be mutually exclusive. In other words, it makes no sense to
+    delete a key and also a subkey of that key, because deleting a key will _ipso facto_ delete all subkeys of that key.
+
+  - Here the leaves are the list read vertically from `.display_text_range` to `.truncated`, and none of them have
+    subkeys.
+
+  - Note that providing a non-whitespace character to the third element in the list parameter `seps` of the function
+    `mask_preceding` (in the file `trie_util.py`) will add a distinguishing separator between the tree and the leaves
+    to display this separation more clearly.
+
+    - (This was used for development/debugging and is not exposed to the calling function `mask_preceding_printing`
+      which initiates the write to STDOUT within the recursive function `trie_walk`).
+
+Given this guesstimate of how to programmatically write a `del` call from the masked trie representation of a
+JSON path list, I will write a simple Python script which takes as input the masked trie.
+
+- It will not need to know the input for the masked trie (though we must take care to spot any omitted iterators,
+  as their masked whitespace will be two characters longer than the key)
+  - See the note on `variants`/`variants[]` above.
