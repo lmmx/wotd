@@ -7,7 +7,7 @@ To retrieve the paths marked with an `x` inside the checkbox indicating that the
 ```sh
 grep '\-\s\[x\]' ukp_manifest.md | cut -d\` -f2
 ```
-
+⇣
 ```STDOUT
 .[] .tweet .display_text_range
 .[] .tweet .favorited
@@ -39,7 +39,7 @@ The first one is the less trivial, and can be listed with:
 ```sh
 grep -v "\- \[x\]" ukp_manifest.md | grep "\[\].*\[\]" | cut -d\` -f2
 ```
-
+⇣
 ```STDOUT
 .[] .tweet .entities .hashtags[] .indices
 .[] .tweet .entities .hashtags[] .text
@@ -97,7 +97,7 @@ cat path_trie.py | sed 's/: {None: None}//g'| sed '/\},*/d' | cut -d " " -f 5- |
   sed '/^\s*$/d' | tr -d ":" | tr -d '"' | tr -d "{" | tr -d "." | \
   sed 's/None None/—/g'
 ```
-
+⇣
 ```STDOUT
 [] 
     tweet 
@@ -266,7 +266,7 @@ is empty (i.e. the subpath has one of the aforementioned 'null child' leaves).
 ```sh
 python trie_walk.py | tee trie_walked.txt
 ```
-
+⇣
 ```STDOUT
 .[] .tweet .entities .hashtags[] .indices
                                  .text
@@ -460,7 +460,7 @@ the output of the hardcoded file would omit the first line making the full path 
 ```sh
 grep -v "\- \[x\]" ukp_manifest.md | grep "\[\].*\[\]" | cut -d\` -f2 | tail -30 | python trie_walk.py -
 ```
-
+⇣
 ```STDOUT
 .[] .tweet .extended_entities .media[] .sizes 
                                               .large 
@@ -499,7 +499,7 @@ or just the final 3 levels:
 ```sh
 grep -v "\- \[x\]" ukp_manifest.md | grep "\[\].*\[\]" | cut -d\` -f2 | tail -7 | python trie_walk.py -
 ```
-
+⇣
 ```STDOUT
 .[] .tweet .extended_entities .media[] .video_info 
                                                    .aspect_ratio
@@ -516,7 +516,7 @@ variants key.
 ```sh
 grep -v "\- \[x\]" ukp_manifest.md | grep "\[\].*\[\]" | cut -d\` -f2 | tail -4 | python trie_walk.py -
 ```
-
+⇣
 ```STDOUT
 .[] .tweet .extended_entities .media[] .video_info .variants
                                                                .bitrate
@@ -527,7 +527,7 @@ grep -v "\- \[x\]" ukp_manifest.md | grep "\[\].*\[\]" | cut -d\` -f2 | tail -4 
 ```sh
 grep -v "\- \[x\]" ukp_manifest.md | grep "\[\].*\[\]" | cut -d\` -f2 | tail -3 | python trie_walk.py -
 ```
-
+⇣
 ```STDOUT
 .[] .tweet .extended_entities .media[] .video_info .variants[] .bitrate
                                                                .content_type
@@ -561,7 +561,7 @@ If we produce the masked trie from the list of paths this `del` call targets, we
 ```sh
 grep '\-\s\[x\]' ukp_manifest.md | cut -d\` -f2 | python trie_walk.py -
 ```
-
+⇣
 ```STDOUT
 .[] .tweet .display_text_range
            .favorited
@@ -617,3 +617,41 @@ JSON path list, I will write a simple Python script which takes as input the mas
 - It will not need to know the input for the masked trie (though we must take care to spot any omitted iterators,
   as their masked whitespace will be two characters longer than the key)
   - See the note on `variants`/`variants[]` above.
+
+To begin, let's reproduce the `jq del` call in `dejunk.sh` from the trie which it was written to target.
+
+```sh
+grep '\-\s\[x\]' ukp_manifest.md | cut -d\` -f2 | python trie_walk.py -
+```
+⇣
+```STDOUT
+.[] .tweet .display_text_range
+           .favorited
+           .id
+           .possibly_sensitive
+           .retweeted
+           .source
+           .truncated
+```
+
+...which I'll just write with `>>` into a Python string variable:
+
+```py
+del_call = """
+.[] .tweet .display_text_range
+           .favorited
+           .id
+           .possibly_sensitive
+           .retweeted
+           .source
+           .truncated
+""".strip("\n")
+```
+
+The goal is to recreate the `jq` command (in `dejunk.sh`):
+
+```sh
+jq '[.[] | del(.tweet ["retweeted", "source", "display_text_range", "id", "truncated", "favorited", "possibly_sensitive"] )]' wotd_tweet.json
+```
+
+(TBC)
