@@ -22,9 +22,12 @@ without enumerating all paths given how variable the tweet object structure can 
 - A 'path' here is a rooted path to any key, which I call a "unique key path" or UKP
 
 Following this initial 'dejunk' step, I wanted to get a full account of what was in this JSON,
-so I enumerated all the paths (there were 106 of them, I had removed only 7 in the initial 'dejunking'),
-and turned these into a 'checklist' to be deleted from the JSON programmatically rather than by manually
-writing a `del` command (it'd get very big, and hard to maintain if I wanted to change it later).
+so I enumerated all the paths (106 of them, the initial 'dejunking' only removed 7), the rest 
+of which required would need more complex `jq` commands (due to nested keys inside iterators).
+
+I turned these 106 paths into a 'checklist' to be deleted from the JSON programmatically rather than by manually
+writing a `del` command (it'd get big, taking a long time, and becoming hard to maintain or debug if I wanted
+to change it later, or reuse it on another file).
 
 For many of these, the paths are 'inexact' i.e. 'globbed', as they're not present in all Tweet objects.
 The inexact paths 'expand' to a much larger number of paths (they are 'one-to-many').
@@ -33,5 +36,11 @@ This basic auditing step allowed me to confirm that information such as geolocat
 so I could be confident that uploading the file to GitHub wasn't being oblivious to security concerns
 (and will also mean I can remain confident of this in future by inspect this 'UKP manifest').
 
-The step detailed in [AUDIT.md](AUDIT.md) and performed in [`audit.sh`](audit.sh) reduced `wotd_tweet_dejunked.json`
-from 12,330 lines to `TBC` lines in the file `wotd_tweet_reconciled.json`.
+The step detailed in [AUDIT.md](AUDIT.md) and [to be] performed in [`audit.sh`](audit.sh) reduced
+`wotd_tweet_dejunked.json` from 22,000 lines to [`TBC`] lines in the file `wotd_tweet_reconciled.json`.
+
+I wasn't expecting to, but the auditing step led me to write a trie, and then to recursively walk
+this trie to remove any repetitive parts to display the paths only in terms of what changed line by line
+(similar to when you write "   "   "  " to indicate a repeated part of a line, 'as above'). This
+doubles as a suitable method of writing the `jq` query to delete those keys. This is explained in more
+detail in the markdown document.
