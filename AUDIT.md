@@ -328,3 +328,34 @@ python trie_walk.py | tee trie_walked.txt
                                                               ⠶.url
 
 ```
+
+An interesting side effect to note here is that due to the assumption that the input is
+presorted (i.e. it permits/respects any lexicographic order) is that there's no demand for
+parent keys to be called the same thing 'as a parent' vs. 'as a leaf' (so perhaps it's not
+strictly a trie? I'm not sure, though the data structure is).
+
+- For instance, though it's not shown, if we compare the final three lines:
+
+Input:
+
+```
+.[] .tweet .extended_entities .media[] .video_info .variants
+.[] .tweet .extended_entities .media[] .video_info .variants[] .bitrate
+.[] .tweet .extended_entities .media[] .video_info .variants[] .content_type
+.[] .tweet .extended_entities .media[] .video_info .variants[] .url
+```
+
+Trie processed output:
+
+```
+                                                  ⠶.variants
+                                                              ⠶.bitrate
+                                                              ⠶.content_type
+                                                              ⠶.url
+```
+
+Note how the `variants` key becomes an 'iterated' key (as `variants[]`) when it's a parent
+rather than a leaf (i.e. on the final 3 lines), but our algorithm does not do string matching
+at all, so it doesn't "notice", it simply uses the 'stepping' up and down levels and presumes
+that any 'stepping down' must be a single 'step' at a time (since a JSON path tree cannot
+'skip' a step, it must proceed a level at a time).
