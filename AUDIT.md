@@ -209,6 +209,7 @@ Consider how in our path list above, there are these two lines:
 
 i.e. the "sizes" key is both a leaf and a parent. The "large" leaf key is not a parent.
 
+- We will say that the "sizes" key has a "null child" (as well as the "large" key as a 2nd child).
 - In the 'minimalist' representation, note that there is a `—` underneath sizes to show this
 
 ```
@@ -237,3 +238,8 @@ There are two ways to get return from an async function:
 What I want next is to align using whitespace to indicate where lines differ from the precedent line.
 
 To begin with I split the path at each line into a `preceder` subpath, which can then be omitted from the path as a 'common prefix'.
+This is much simplified by the trie data structure, as the way to do so is to simply replace all characters in the preceder subpath
+with whitespace unless the appendage to that subpath is empty (i.e. the subpath has one of the aforementioned 'null child' leaves).
+
+I have written the STDOUT printing and async yielding versions of the program to both read from the same preprocessor function,
+`mask_preceding` in [`trie_util.py`](trie_util.py).

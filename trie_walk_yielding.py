@@ -14,7 +14,7 @@ def trie_walk_yielding(root, yieldfunc, seen=[], preceder=[], level=1, level_key
         seen.append(sk)
         if subtree == {None: None}:
             # the subtree is a leaf
-            yield from yieldfunc(preceder, seen)
+            yield from yieldfunc(preceder, seen, level)
             gone = seen.pop()  # leaf will not be remembered (after being shown)
             if i == len(subtrees) - 1:
                 popped = seen.pop()
@@ -41,7 +41,7 @@ def trie_walk_yielding(root, yieldfunc, seen=[], preceder=[], level=1, level_key
         elif subtree is None:
             # the 'subtree' is a 'null child' indicating the parent is 'also a leaf'
             popped = seen.pop()  # leaf will not be remembered (nor shown at all)
-            yield from yieldfunc(preceder, seen)
+            yield from yieldfunc(preceder, seen, level)
             continue
         subtree_keys = list(subtree.keys())
         preceder.append(sk)
