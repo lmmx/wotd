@@ -45,7 +45,9 @@ def trie_walk_yielding(root, yieldfunc, seen=[], preceder=[], level=1, level_key
             continue
         subtree_keys = list(subtree.keys())
         preceder.append(sk)
-        yield from trie_walk_yielding(subtree, yieldfunc, seen, preceder, level + 1, level_keys)
+        yield from trie_walk_yielding(
+            subtree, yieldfunc, seen, preceder, level + 1, level_keys
+        )
 
 
 def mask_preceding_yielding(preceder, seen):
