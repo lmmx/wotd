@@ -403,3 +403,80 @@ pipe anything into `trie_walk.py` and get its nicely presented masked trie outpu
       calling it from `trie_walk.py`) I pass in the trivial lambda function `lambda x: x`, so
       the `outfunc` wrapper has no effect, and the result of `pipe_trie` becomes `return trie`,
       passing it back to the module the call came from (which in this case is `trie_walk.py`).
+
+Now we can get the same output as in the non-piped script, but without relying on storing
+grep output in a file (like `path_trie.py`, which is less adaptable).
+
+So the new piped version of the original file-based command via `summarise_paths.py` becomes:
+
+```sh
+grep -v "\- \[x\]" ukp_manifest.md | grep "\[\].*\[\]" | cut -d\` -f2 | python trie_walk.py -
+```
+
+We can even verify it's identical to the non-piped version
+- `$(!!) gets the output of rerunning the last command`
+
+```sh
+diff <(python trie_walk.py) <(echo "$(!!)")
+```
+
+The nice thing about this is that we can view a subsection but still get the easy to read
+masking of repeated subpaths on each line (whereas for instance just taking the `tail` of
+the output of the hardcoded file would omit the first line making the full path unknown).
+
+```sh
+grep -v "\- \[x\]" ukp_manifest.md | grep "\[\].*\[\]" | cut -d\` -f2 | tail -30 | python trie_walk.py -
+```
+
+```STDOUT
+.[] .tweet .extended_entities .media[] .sizes 
+                                              .large 
+                                                     .h
+                                                     .resize
+                                                     .w
+                                              .medium 
+                                                      .h
+                                                      .resize
+                                                      .w
+                                              .small 
+                                                     .h
+                                                     .resize
+                                                     .w
+                                              .thumb 
+                                                     .h
+                                                     .resize
+                                                     .w
+                                       .source_status_id
+                                       .source_status_id_str
+                                       .source_user_id
+                                       .source_user_id_str
+                                       .type
+                                       .url
+                                       .video_info 
+                                                   .aspect_ratio
+                                                   .duration_millis
+                                                   .variants
+                                                               .bitrate
+                                                               .content_type
+                                                               .url
+```
+
+or just the final 3 levels:
+
+```sh
+grep -v "\- \[x\]" ukp_manifest.md | grep "\[\].*\[\]" | cut -d\` -f2 | tail -7 | python trie_walk.py -
+```
+
+```STDOUT
+.[] .tweet .extended_entities .media[] .video_info 
+                                                   .aspect_ratio
+                                                   .duration_millis
+                                                   .variants
+                                                               .bitrate
+                                                               .content_type
+                                                               .url
+```
+
+etc.
+
+---
