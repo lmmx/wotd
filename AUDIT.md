@@ -246,87 +246,86 @@ python trie_walk.py | tee trie_walked.txt
 ```
 
 ```STDOUT
-.[] .tweet .entities .hashtags[]⠶.indices
-                                ⠶.text
-                     .media[]⠶.display_url
-                             ⠶.expanded_url
-                             ⠶.id
-                             ⠶.id_str
-                             ⠶.indices
-                             ⠶.media_url
-                             ⠶.media_url_https
-                              .sizes⠶
-                                     .large⠶
-                                           ⠶.h
-                                           ⠶.resize
-                                           ⠶.w
-                                     .medium⠶
-                                            ⠶.h
-                                            ⠶.resize
-                                            ⠶.w
-                                     .small⠶
-                                           ⠶.h
-                                           ⠶.resize
-                                           ⠶.w
-                                     .thumb⠶
-                                           ⠶.h
-                                           ⠶.resize
-                                           ⠶.w
-                             ⠶.source_status_id
-                             ⠶.source_status_id_str
-                             ⠶.source_user_id
-                             ⠶.source_user_id_str
-                             ⠶.type
-                             ⠶.url
-                     .urls[]⠶.display_url
-                            ⠶.expanded_url
-                            ⠶.indices
-                            ⠶.url
-                     .user_mentions[]⠶.id
-                                     ⠶.id_str
-                                     ⠶.indices
-                                     ⠶.name
-                                     ⠶.screen_name
-           .extended_entities .media[] .additional_media_info⠶
-                                                             ⠶.monetizable
-                                      ⠶.display_url
-                                      ⠶.expanded_url
-                                      ⠶.id
-                                      ⠶.id_str
-                                      ⠶.indices
-                                      ⠶.media_url
-                                      ⠶.media_url_https
-                                       .sizes⠶
-                                              .large⠶
-                                                    ⠶.h
-                                                    ⠶.resize
-                                                    ⠶.w
-                                              .medium⠶
-                                                     ⠶.h
-                                                     ⠶.resize
-                                                     ⠶.w
-                                              .small⠶
-                                                    ⠶.h
-                                                    ⠶.resize
-                                                    ⠶.w
-                                              .thumb⠶
-                                                    ⠶.h
-                                                    ⠶.resize
-                                                    ⠶.w
-                                      ⠶.source_status_id
-                                      ⠶.source_status_id_str
-                                      ⠶.source_user_id
-                                      ⠶.source_user_id_str
-                                      ⠶.type
-                                      ⠶.url
-                                       .video_info⠶
-                                                  ⠶.aspect_ratio
-                                                  ⠶.duration_millis
-                                                  ⠶.variants
-                                                              ⠶.bitrate
-                                                              ⠶.content_type
-                                                              ⠶.url
-
+.[] .tweet .entities .hashtags[] .indices
+                                 .text
+                     .media[] .display_url
+                              .expanded_url
+                              .id
+                              .id_str
+                              .indices
+                              .media_url
+                              .media_url_https
+                              .sizes 
+                                     .large 
+                                            .h
+                                            .resize
+                                            .w
+                                     .medium 
+                                             .h
+                                             .resize
+                                             .w
+                                     .small 
+                                            .h
+                                            .resize
+                                            .w
+                                     .thumb 
+                                            .h
+                                            .resize
+                                            .w
+                              .source_status_id
+                              .source_status_id_str
+                              .source_user_id
+                              .source_user_id_str
+                              .type
+                              .url
+                     .urls[] .display_url
+                             .expanded_url
+                             .indices
+                             .url
+                     .user_mentions[] .id
+                                      .id_str
+                                      .indices
+                                      .name
+                                      .screen_name
+           .extended_entities .media[] .additional_media_info 
+                                                              .monetizable
+                                       .display_url
+                                       .expanded_url
+                                       .id
+                                       .id_str
+                                       .indices
+                                       .media_url
+                                       .media_url_https
+                                       .sizes 
+                                              .large 
+                                                     .h
+                                                     .resize
+                                                     .w
+                                              .medium 
+                                                      .h
+                                                      .resize
+                                                      .w
+                                              .small 
+                                                     .h
+                                                     .resize
+                                                     .w
+                                              .thumb 
+                                                     .h
+                                                     .resize
+                                                     .w
+                                       .source_status_id
+                                       .source_status_id_str
+                                       .source_user_id
+                                       .source_user_id_str
+                                       .type
+                                       .url
+                                       .video_info 
+                                                   .aspect_ratio
+                                                   .duration_millis
+                                                   .variants
+                                                               .bitrate
+                                                               .content_type
+                                                               .url
 ```
 
 An interesting side effect to note here is that due to the assumption that the input is
@@ -348,10 +347,10 @@ Input:
 Trie processed output:
 
 ```
-                                                  ⠶.variants
-                                                              ⠶.bitrate
-                                                              ⠶.content_type
-                                                              ⠶.url
+                                                   .variants
+                                                               .bitrate
+                                                               .content_type
+                                                               .url
 ```
 
 Note how the `variants` key becomes an 'iterated' key (as `variants[]`) when it's a parent
@@ -359,3 +358,9 @@ rather than a leaf (i.e. on the final 3 lines), but our algorithm does not do st
 at all, so it doesn't "notice", it simply uses the 'stepping' up and down levels and presumes
 that any 'stepping down' must be a single 'step' at a time (since a JSON path tree cannot
 'skip' a step, it must proceed a level at a time).
+
+- Where this occurs, the children of the parent key without an iterator (like
+  those below `.variants`) will appear 'shifted along' by a couple of characters where the
+  `[]` is masked as whitespace.
+- Also note that the first line is treated differently, so as long as the paths are sorted
+  following the initial line, the algorithm should display any set of JSON paths from jq correctly.

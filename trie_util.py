@@ -1,4 +1,4 @@
-def mask_preceding(preceder, path, lvls, level, leaf_sizes, null_children, seps=[" "," ","⠶"]):
+def mask_preceding(preceder, path, lvls, level, leaf_sizes, null_children, seps=[" "," "," "]):
     mask_sep, path_sep, leaf_sep = seps
     if len(null_children) > 1:
         is_null_child = null_children[-1] == 1
