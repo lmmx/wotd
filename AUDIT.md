@@ -1,5 +1,3 @@
-In the previous step ([DEJUNK.md](DEJUNK.md)) we ended up by enumerating all the unique inexact paths to a key,
-then making this list unique, so as to provide a 'manifest of keys' by their paths: `ukp_manifest.md`.
 
 To retrieve the paths marked with an `x` inside the checkbox indicating that the path is to be filtered out:
 
@@ -232,7 +230,6 @@ nodes are and are not also leaves).
 
 There are two ways to get return from an async function:
 - print it out to STDOUT (as in [`trie_walk.py`](trie_walk.py))
-  - I directed the output to [`trie_walked.txt`](trie_walked.txt) for viewing
 - yield from the calls that would otherwise return after printing (as in [`trie_walk_yielding.py`](trie_walk_yielding.py))
 
 What I want next is to align using whitespace to indicate where lines differ from the precedent line.
@@ -241,5 +238,93 @@ To begin with I split the path at each line into a `preceder` subpath, which can
 This is much simplified by the trie data structure, as the way to do so is to simply replace all characters in the preceder subpath
 with whitespace unless the appendage to that subpath is empty (i.e. the subpath has one of the aforementioned 'null child' leaves).
 
-I have written the STDOUT printing and async yielding versions of the program to both read from the same preprocessor function,
-`mask_preceding` in [`trie_util.py`](trie_util.py).
+- I have written the STDOUT printing and async yielding versions of the program to both read from the same preprocessor function, `mask_preceding` in [`trie_util.py`](trie_util.py).
+  - I piped the output of `trie_walk.py` using a simpler printing function into `trie_walked_arrows.txt` (the function is available in `trie_util.py` as `mask_preceding_arrows`)
+
+```sh
+python trie_walk.py | tee trie_walked.txt
+```
+
+```STDOUT
+.[] .tweet .entities .hashtags[]⠶.indices
+                                ⠶.text
+                     .media[]⠶.display_url
+                             ⠶.expanded_url
+                             ⠶.id
+                             ⠶.id_str
+                             ⠶.indices
+                             ⠶.media_url
+                             ⠶.media_url_https
+                              .sizes⠶
+                                     .large⠶
+                                           ⠶.h
+                                           ⠶.resize
+                                           ⠶.w
+                                     .medium⠶
+                                            ⠶.h
+                                            ⠶.resize
+                                            ⠶.w
+                                     .small⠶
+                                           ⠶.h
+                                           ⠶.resize
+                                           ⠶.w
+                                     .thumb⠶
+                                           ⠶.h
+                                           ⠶.resize
+                                           ⠶.w
+                             ⠶.source_status_id
+                             ⠶.source_status_id_str
+                             ⠶.source_user_id
+                             ⠶.source_user_id_str
+                             ⠶.type
+                             ⠶.url
+                     .urls[]⠶.display_url
+                            ⠶.expanded_url
+                            ⠶.indices
+                            ⠶.url
+                     .user_mentions[]⠶.id
+                                     ⠶.id_str
+                                     ⠶.indices
+                                     ⠶.name
+                                     ⠶.screen_name
+           .extended_entities .media[] .additional_media_info⠶
+                                                             ⠶.monetizable
+                                      ⠶.display_url
+                                      ⠶.expanded_url
+                                      ⠶.id
+                                      ⠶.id_str
+                                      ⠶.indices
+                                      ⠶.media_url
+                                      ⠶.media_url_https
+                                       .sizes⠶
+                                              .large⠶
+                                                    ⠶.h
+                                                    ⠶.resize
+                                                    ⠶.w
+                                              .medium⠶
+                                                     ⠶.h
+                                                     ⠶.resize
+                                                     ⠶.w
+                                              .small⠶
+                                                    ⠶.h
+                                                    ⠶.resize
+                                                    ⠶.w
+                                              .thumb⠶
+                                                    ⠶.h
+                                                    ⠶.resize
+                                                    ⠶.w
+                                      ⠶.source_status_id
+                                      ⠶.source_status_id_str
+                                      ⠶.source_user_id
+                                      ⠶.source_user_id_str
+                                      ⠶.type
+                                      ⠶.url
+                                       .video_info⠶
+                                                  ⠶.aspect_ratio
+                                                  ⠶.duration_millis
+                                                  ⠶.variants
+                                                              ⠶.bitrate
+                                                              ⠶.content_type
+                                                              ⠶.url
+
+```
