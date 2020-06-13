@@ -812,3 +812,75 @@ Again, it can be called with input piped over STDIN (the command below gives the
 ```sh
 grep '\-\s\[x\]' ukp_manifest.md | cut -d\` -f2 | python trie_walk.py - | python build_simple_del_call.py -
 ```
+
+### Levelling up (and down) to validate jq checklist input
+
+It's now time to level up the checklist parser so that it can handle real
+examples, to do which it must reject inconsistent configurations of the checklist.
+In other words, it must validate the input paths that are piped into it.
+
+Let's take a look at the example we saw earlier, monotonically descending 3 levels:
+
+```sh
+grep -v "\- \[x\]" ukp_manifest.md | grep "\[\].*\[\]" | cut -d\` -f2 | tail -7 | python trie_walk.py -
+```
+⇣
+```STDOUT
+.[] .tweet .extended_entities .media[] .video_info 
+                                                   .aspect_ratio
+                                                   .duration_millis
+                                                   .variants
+                                                               .bitrate
+                                                               .content_type
+                                                               .url
+```
+
+Notice how this doesn't make sense as a filter: after filtering out the path to the
+`video_info` key from the first line, the descendants below it will be gone. So
+it is a waste of time to construct these paths as `jq` `del` calls at all.
+
+Before we get to the separate issue of constructing jq programs from tries that step
+up and down, let's first add a check that will abort the program entirely if it
+is invalidly stated.
+
+- A trie is invalid input to `build_del_call.py` if any key path it contains
+  is an ancestor of any other (or vice versa, if any UKP it contains is a descendant
+  of any other).
+- Algorithmically, since we expect the trie input will be lexicographically sorted,
+  we only need to consider the 'forward' or 'downward' case: if we encounter any
+  key whose preceding subpath contains the full path to any previously encountered
+  key, then abort the entire program and throw an error as the input is invalid.
+
+So what does valid input look like?
+
+```sh
+grep -v "\- \[x\]" ukp_manifest.md | grep "\[\].*\[\]" | cut -d\` -f2 | tail -6 | sed '/variants$/d' | python trie_walk.py -
+```
+⇣
+```STDOUT
+.[] .tweet .extended_entities .media[] .video_info .aspect_ratio
+                                                   .duration_millis
+                                                               .bitrate
+                                                               .content_type
+                                                               .url
+```
+
+There's a bug here. The output should be:
+
+```
+.[] .tweet .extended_entities .media[] .video_info .aspect_ratio
+                                                   .duration_millis
+                                                   .variants[] .bitrate
+                                                               .content_type
+                                                               .url
+```
+
+The difference between this (the expected output, which I'll fix now) and
+the invalid masked trie output (with the first line ending with `.video_info`)
+is the difference between valid and invalid output.
+
+- As far as I can tell so far, valid input will have no 'null children', as
+  any descendants must (by the definition of mutually exclusive descendants and
+  ancestors) exclude their descendants from a list of filter paths.
+- In other words, detecting paths which have these 'null children' will be
+  sufficient to validate the masked trie list as input to `build_del_call.py`.
