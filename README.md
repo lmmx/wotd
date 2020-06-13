@@ -27,7 +27,8 @@ of which required would need more complex `jq` commands (due to nested keys insi
 
 I turned these 106 paths into a 'checklist' to be deleted from the JSON programmatically rather than by manually
 writing a `del` command (it'd get big, taking a long time, and becoming hard to maintain or debug if I wanted
-to change it later, or reuse it on another file).
+to change it later, or reuse it on another file e.g. the much larger JSON file
+of all tweets, rather than this WOTD subset).
 
 For many of these, the paths are 'inexact' i.e. 'globbed', as they're not present in all Tweet objects.
 The inexact paths 'expand' to a much larger number of paths (they are 'one-to-many').

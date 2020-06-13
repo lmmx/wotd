@@ -654,4 +654,133 @@ The goal is to recreate the `jq` command (in `dejunk.sh`):
 jq '[.[] | del(.tweet ["retweeted", "source", "display_text_range", "id", "truncated", "favorited", "possibly_sensitive"] )]' wotd_tweet.json
 ```
 
-(TBC)
+To get a better look at it, let's convert the jq command into pseudo-Python code so black will lint it:
+
+- Extract the jq command from inside the single quotation marks
+- Capitalise 'del' because it's a reserved word in Python (a keyword)
+- Put a colon inside the iterator brackets after all key names
+- Replace the prefixing dot in any key names with an underscore
+
+black then lints the above command (saved as `dejunk_sh.py`) to:
+
+```py
+[
+    _[:]
+    | DEL(
+        _tweet[
+            "retweeted",
+            "source",
+            "display_text_range",
+            "id",
+            "truncated",
+            "favorited",
+            "possibly_sensitive",
+        ]
+    )
+]
+```
+
+We can make it look a bit more like the original command again:
+
+```sh
+cat dejunk_sh.py | tr -d ":" | sed 's/DEL/del/' | sed 's/\s_/ \./g'
+```
+⇣
+```STDOUT
+[
+    .[]
+    | del(
+        .tweet[
+            "retweeted",
+            "source",
+            "display_text_range",
+            "id",
+            "truncated",
+            "favorited",
+            "possibly_sensitive",
+        ]
+    )
+]
+```
+
+or all on one line:
+
+```sh
+cat dejunk_sh.py | tr -d ":" | sed 's/DEL/del/' | sed 's/\s_/ \./g' | tr -d "\n" | sed 's/\s\s*/ /g'
+```
+⇣
+```STDOUT
+[ .[] | del( .tweet[ "retweeted", "source", "display_text_range", "id", "truncated", "favorited", "possibly_sensitive", ] )]
+```
+
+Note how black introduces a comma after the final leaf is listed in the array for subkeys of `.tweet`:
+
+```
+            "possibly_sensitive",
+        ]
+    )
+]
+```
+
+Note that this would cause jq to throw an error.
+
+```sh
+python build_del_call.py
+```
+⇣
+```STDOUT
+[
+    _[:]
+    | DEL(
+        _tweet[
+            "display_text_range",
+            "favorited",
+            "id",
+            "possibly_sensitive",
+            "retweeted",
+            "source",
+            "truncated",
+        ]
+    )
+]
+```
+
+If we now pipe this to `black`, it is returned without changes
+
+```sh
+python build_del_call.py | black - > /dev/null
+```
+⇣
+```STDOUT
+All done! ✨ 🍰 ✨
+1 file left unchanged.
+```
+
+In fact this is identical to the real call we wrote manually in all but the order of leaf keys, as already noted.
+
+```sh
+diff <(python build_del_call.py) <(cat dejunk_sh.py)
+```
+⇣
+```STDOUT
+5,8d4
+<             "display_text_range",
+<             "favorited",
+<             "id",
+<             "possibly_sensitive",
+10a7,8
+>             "display_text_range",
+>             "id",
+11a10,11
+>             "favorited",
+>             "possibly_sensitive",
+```
+
+Adding a check at the beginning `if "-" in sys.argv`, I then made `build_del_call.py` pipeable over STDIN too!
+
+Now we can reproduce the same output we get from running `python build_del_call.py` by the equivalent workflow:
+
+```sh
+grep '\-\s\[x\]' ukp_manifest.md | cut -d\` -f2 | python trie_walk.py - | python build_del_call.py -
+diff <(python build_del_call.py) <(echo "$(!!)")
+```
