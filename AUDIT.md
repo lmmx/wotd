@@ -553,7 +553,7 @@ tries is `dejunk.sh` (which was described in `DEJUNK.md`)
 # - .tweet.favorited
 # - .tweet.possibly_sensitive
 
-jq '[.[] | del(.tweet ["retweeted", "source", "display_text_range", "id", "truncated", "favorited", "possibly_sensitive"] )]' wotd_tweet.json
+jq '[.[] | del(.tweet ["retweeted", "source", "display_text_range", "id", "truncated", "favorited", "possibly_sensitive"])]' wotd_tweet.json
 ```
 
 If we produce the masked trie from the list of paths this `del` call targets, we get the following:
@@ -651,7 +651,7 @@ del_call = """
 The goal is to recreate the `jq` command (in `dejunk.sh`):
 
 ```sh
-jq '[.[] | del(.tweet ["retweeted", "source", "display_text_range", "id", "truncated", "favorited", "possibly_sensitive"] )]' wotd_tweet.json
+jq '[.[] | del(.tweet ["retweeted", "source", "display_text_range", "id", "truncated", "favorited", "possibly_sensitive"])]' wotd_tweet.json
 ```
 
 To get a better look at it, let's convert the jq command into pseudo-Python code so black will lint it:
@@ -725,7 +725,7 @@ Note how black introduces a comma after the final leaf is listed in the array fo
 Note that this would cause jq to throw an error.
 
 ```sh
-python build_del_call.py
+python build_del_call_pseudo.py
 ```
 ⇣
 ```STDOUT
@@ -748,7 +748,7 @@ python build_del_call.py
 If we now pipe this to `black`, it is returned without changes
 
 ```sh
-python build_del_call.py | black - > /dev/null
+python build_del_call_pseudo.py | black - > /dev/null
 ```
 ⇣
 ```STDOUT
@@ -759,7 +759,7 @@ All done! ✨ 🍰 ✨
 In fact this is identical to the real call we wrote manually in all but the order of leaf keys, as already noted.
 
 ```sh
-diff <(python build_del_call.py) <(cat dejunk_sh.py)
+diff <(python build_del_call_pseudo.py) <(cat dejunk_sh.py)
 ```
 ⇣
 ```STDOUT
@@ -776,11 +776,39 @@ diff <(python build_del_call.py) <(cat dejunk_sh.py)
 >             "possibly_sensitive",
 ```
 
-Adding a check at the beginning `if "-" in sys.argv`, I then made `build_del_call.py` pipeable over STDIN too!
+Adding a check at the beginning `if "-" in sys.argv`, I then made `build_del_call_pseudo.py` pipeable over STDIN too!
 
-Now we can reproduce the same output we get from running `python build_del_call.py` by the equivalent workflow:
+Now we can reproduce the same output we get from running `python build_del_call_pseudo.py` by the equivalent workflow:
 
 ```sh
-grep '\-\s\[x\]' ukp_manifest.md | cut -d\` -f2 | python trie_walk.py - | python build_del_call.py -
-diff <(python build_del_call.py) <(echo "$(!!)")
+grep '\-\s\[x\]' ukp_manifest.md | cut -d\` -f2 | python trie_walk.py - | python build_del_call_pseudo.py -
+diff <(python build_del_call_pseudo.py) <(echo "$(!!)")
+```
+
+We now need to reobtain the actual `dejunk.sh` target file, not the pseudo-Python we derived from it in `dejunk_sh.py`.
+
+To do this, I will use a modified program `build_simple_del_call.py` which:
+
+- outputs less whitespace and no newlines within the command,
+- does not add a colon inside iterator square brackets,
+- does not capitalise the `del` call
+- does not replace prefixing `.` in key names with an underscore
+- retains a space, within the `del` call, between keys and the square brackets opening for subkeys
+- removes the final comma in the list of leaves below an iterator
+
+This cannot handle the changing levels of the real output tries, but it's a step towards a program that can.
+Again, the output is identical except for the JSON keys becoming alphabetically ordered in the generated `jq` call.
+
+```sh
+python build_simple_del_call.py
+```
+⇣
+```STDOUT
+jq '[.[] | del(.tweet ["display_text_range", "favorited", "id", "possibly_sensitive", "retweeted", "source", "truncated"])]' wotd_tweet.json
+```
+
+Again, it can be called with input piped over STDIN (the command below gives the same output as the previous)
+
+```sh
+grep '\-\s\[x\]' ukp_manifest.md | cut -d\` -f2 | python trie_walk.py - | python build_simple_del_call.py -
 ```
