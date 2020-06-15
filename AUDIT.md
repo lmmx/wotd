@@ -884,3 +884,128 @@ is the difference between valid and invalid output.
   ancestors) exclude their descendants from a list of filter paths.
 - In other words, detecting paths which have these 'null children' will be
   sufficient to validate the masked trie list as input to `build_del_call.py`.
+
+I will call this version of the program `trie_walk_v.py` (v for 'validated').
+  - It doesn't seem like you can pass flags while piping over STDIN so I can't simply modify the behaviour
+    of the existing program with a `-v` flag
+
+Firstly, to see the nested dict structure of the trie built from an invalid input,
+we'll pipe it into jq which gives a JSON-style whitespacing:
+
+We want to reject this 2 line input:
+
+```sh
+grep -v "\- \[x\]" ukp_manifest.md | grep "\[\].*\[\]" | head -11 | tail -2 | cut -d\` -f2
+```
+⇣
+```STDOUT
+.[] .tweet .entities .media[] .sizes
+.[] .tweet .entities .media[] .sizes .large
+```
+
+because the first line has a "null child", the "null" sibling of the key ".large".
+
+When this input is processed into a trie, we get:
+
+```sh
+grep -v "\- \[x\]" ukp_manifest.md | grep "\[\].*\[\]" | head -11 | tail -2 | cut -d\` -f2 | python summarise_paths.py
+```
+⇣
+```STDOUT
+{'.[]': {'.tweet': {'.entities': {'.media[]': {'.sizes': {None: None, '.large': {None: None}}}}}}}
+```
+
+and to make this structure clearer to read, we can `sed` it into pseudo-JSON (i.e. make it
+sufficiently JSON-like for `jq` to parse it and pretty print it indented by dict nesting level):
+
+```sh
+grep -v "\- \[x\]" ukp_manifest.md | grep "\[\].*\[\]" | head -11 | tail -2 | cut -d\` -f2 | python summarise_paths.py | sed 's/None/"None"/g' | sed "s/'/\"/g" | jq .
+```
+⇣
+```STDOUT
+{
+  ".[]": {
+    ".tweet": {
+      ".entities": {
+        ".media[]": {
+          ".sizes": {
+            "None": "None",
+            ".large": {
+              "None": "None"
+            }
+          }
+        }
+      }
+    }
+  }
+}
+```
+
+Which makes the null sibling very clear: this prints the keys in blue and values in green.
+There are only two values (shown in green), both of which are `None` (the only value in our trie,
+the `_end` signal), but whereas the value at the "deepest" level is an "only child" (the only
+entry "child" inside the "parent" dict whose key is `.large`), the other 'null entry' is a sibling,
+the 'null sibling' of the key `.large`.
+
+- A "null entry" means an entry (i.e. a key-value pair) where both key and value are `None`
+  - "has a null child" means "contains a key which is `None`, the value of which is also `None`"
+- A "null sibling" means an entry which is both a 'null child' and the 'sibling' of a non-null entry
+  - where 'sibling' means any entry sharing the same 'parent' key (i.e. an entry which is not an "only child")
+  - where 'non-null entry' means any entry whose key is not `None` (but with no implication of this key's value).
+
+So what we have is the same null entry, `"None": "None"`, either
+
+- as an "only child" (i.e. the singleton entry of a dict), or
+- as a "null sibling"
+  - I previously called this "null sibling" a "null child" to emphasise the interpretation of its parent key,
+    but now I wish to emphasise the role of its sibling key
+    - (which will always occur 'after' the null entry, i.e. arise from a line below the line
+       which produced the null sibling, due to the input file being lexicographically sorted).
+
+In short, we can detect an invalid input when we detect any attempt to insert any key whatsoever after
+(i.e. as a sibling to) a null entry (the null 'child' entry of the shared 'parent' key).
+
+Phrased in another way, we want to require every null entry in our trie to be a singleton entry (or "only child").
+
+In terms of Python's `dict` data structure, this will mean that we want to require every null entry in our trie
+to be at the "deepest level": not globally but for the rooted path in the trie up to that null node. One way then
+to phrase this requirement in computational terms is to require the `dict` to 'close' upon encountering a null entry,
+and not reopen that key. This can be implemented as closing the parent key then throwing an error if the key is reopened.
+
+```sh
+grep -v "\- \[x\]" ukp_manifest.md | grep "\[\].*\[\]" | head -11 | tail -2 | cut -d\` -f2 | python trie_walk_v.py -
+```
+⇣
+
+> ValueError: Invalid input: ".[] .tweet .entities .media[] .sizes"
+> is both a UKP path and a subpath above the key ".large"
+
+
+To return to the earlier example with 3 levels:
+
+```sh
+grep -v "\- \[x\]" ukp_manifest.md | grep "\[\].*\[\]" | cut -d\` -f2 | tail -7 | python trie_walk_v.py -
+```
+⇣
+
+> ValueError: Invalid input: ".[] .tweet .extended_entities .media[] .video_info"
+> is both a UKP path and a subpath above the key ".aspect_ratio"
+
+...and when that input is made valid by removing the path to the 'variants' key:
+
+```sh
+grep -v "\- \[x\]" ukp_manifest.md | grep "\[\].*\[\]" | cut -d\` -f2 | tail -6 | sed '/variants$/d' | python trie_walk_v.py -
+```
+⇣
+```STDOUT
+.[] .tweet .extended_entities .media[] .video_info .aspect_ratio
+                                                   .duration_millis
+                                                               .bitrate
+                                                               .content_type
+                                                               .url
+```
+
+We get the masked trie output without `ValueError` thrown, as this is valid input.
+
+Now however it's clear that the bug that masks `variants[]` isn't caused by reading the line ending
+with the `variants` key, as it still occurs after removing this line with `sed '/variants$/d'`.

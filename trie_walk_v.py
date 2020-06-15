@@ -132,6 +132,6 @@ def mask_preceding_printing(
 
 if "-" in sys.argv:
     piped_input = list(fileinput.input())
-    trie = pipe_trie(piped_input, outfunc=lambda x: x, validate=False)
+    trie = pipe_trie(piped_input, outfunc=lambda x: x, validate=True)
 
 r = list(trie_walk(trie, showfunc=mask_preceding_printing))

@@ -13,9 +13,7 @@ else:
            .retweeted
            .source
            .truncated
-""".strip(
-        "\n"
-    )
+""".strip("\n")
 
 path_lines = del_call.split("\n")
 
@@ -62,7 +60,7 @@ for l_no, line in enumerate(path_lines[1:]):
         if len(old_preamble_subpath) == len(preamble_subpath):
             for postamble_part in postamble_subpath:
                 if l_no == len(path_lines) - 2:
-                    comma_sep = "" # omit comma-separator on final line
+                    comma_sep = ""  # omit comma-separator on final line
                 print('"' + postamble_part.lstrip(".") + f'"{comma_sep}', end="")
     # print(preamble_subpath, postamble_subpath)
     # compare path at each line and pop it once per space-sep. dedent
